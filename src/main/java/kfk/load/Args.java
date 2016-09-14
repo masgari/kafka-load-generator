@@ -50,7 +50,7 @@ public class Args {
             throw new RuntimeException("Invalid kafka cluster: " + cluster);
         }
 
-        Preconditions.checkArgument(threads < 1, "Invalid number of threads: %s", threads);
+        Preconditions.checkArgument(threads >= 1, "Invalid number of threads: %s", threads);
     }
 
     public String messageSerializerClass() {
