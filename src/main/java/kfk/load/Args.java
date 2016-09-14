@@ -1,6 +1,7 @@
 package kfk.load;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.net.HostAndPort;
 
@@ -11,7 +12,7 @@ public class Args {
     private boolean help;
 
     @Parameter(names = {"--threads"}, description = "Number of concurrent load generators")
-    private int threads = Runtime.getRuntime().availableProcessors() - 1;
+    private int threads = Runtime.getRuntime().availableProcessors();
 
     @Parameter(names = {"--size"}, description = "Size of random message in kilo bytes")
     private int messageSize = 1024 * 2;
@@ -48,6 +49,8 @@ public class Args {
         if (Strings.isNullOrEmpty(cluster)) {
             throw new RuntimeException("Invalid kafka cluster: " + cluster);
         }
+
+        Preconditions.checkArgument(threads < 1, "Invalid number of threads: %s", threads);
     }
 
     public String messageSerializerClass() {
