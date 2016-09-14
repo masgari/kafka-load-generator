@@ -1,0 +1,48 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+mainClassName = 'kfk.load.Main'
+
+repositories {
+    jcenter()
+}
+
+ext {
+    // frameworks
+    vertx_version = '3.3.2'
+    vertx_kafka_version = '0.4.1'
+
+    // general
+    guava_version = '19.0'
+    jcommander_version = '1.48'
+
+    // testing
+    junit_version = '4.12'
+    mockito_core_version = '1.10.19'
+    hamcrest_version1 = '1.3'
+    findbugs_version = '3.0.1'
+    awaitility_version = '1.7.0'
+}
+
+dependencies {
+
+    // util
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile "com.google.guava:guava:$guava_version"
+    compile "com.beust:jcommander:$jcommander_version"
+
+    // vertx
+    compile "io.vertx:vertx-core:$vertx_version"
+    compile "io.vertx:vertx-web:$vertx_version"
+
+    compile "com.cyngn.vertx:vertx-kafka:$vertx_kafka_version"
+
+    // test
+    testCompile "junit:junit:$junit_version", {
+        exclude module: 'hamcrest-core', group: 'org.hamcrest'
+    }
+    testCompile "org.mockito:mockito-core:$mockito_core_version"
+    testCompile "org.hamcrest:hamcrest-all:$hamcrest_version1"
+    testCompile "com.jayway.awaitility:awaitility:$awaitility_version"
+}
