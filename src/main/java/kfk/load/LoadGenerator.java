@@ -67,7 +67,8 @@ public class LoadGenerator implements Closeable {
                         return;
                     }
                     System.out.println("kafka producer verticle started");
-                    startMessagePublishers();
+                    vertx.executeBlocking(f -> startMessagePublishers(), r -> {
+                    });
                 });
     }
 }
