@@ -26,6 +26,9 @@ public class Args {
     @Parameter(names = {"--port"}, description = "Kafka servers listening port")
     private int port = 9092;
 
+    @Parameter(names = {"--rate"}, description = "Message publishing rate (per sec)")
+    private double rate = 10e6 / 10;// 1 million message per sec
+
     @Parameter(names = {"--message-serializer"}, description = "Kafka message serializer class, must be in classpath")
     private String messageSerializerClass = "org.apache.kafka.common.serialization.StringSerializer";
 
@@ -45,11 +48,12 @@ public class Args {
         return help;
     }
 
-    public void verify() {
-        if (Strings.isNullOrEmpty(cluster)) {
-            throw new RuntimeException("Invalid kafka cluster: " + cluster);
-        }
+    public double rate() {
+        return rate;
+    }
 
+    public void verify() {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster), "Invalid kafka cluster: %s", cluster);
         Preconditions.checkArgument(threads >= 1, "Invalid number of threads: %s", threads);
     }
 

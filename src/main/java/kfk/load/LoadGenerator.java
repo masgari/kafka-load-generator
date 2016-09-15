@@ -1,10 +1,9 @@
 package kfk.load;
 
-import com.cyngn.kafka.produce.KafkaPublisher;
 import com.cyngn.kafka.produce.MessageProducer;
+import com.google.common.base.Strings;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -12,51 +11,20 @@ import java.io.IOException;
 /**
  */
 public class LoadGenerator implements Closeable {
-    private final Args args;
-    private final MessageGenerator meessageGenerator;
+    private final DeploymentOptions deploymentOptions;
     private final Vertx vertx;
+    private final MessagePublisher publisher;
+    private String producerDeploymentId;
 
-    public LoadGenerator(final Args args) {
-        vertx = Vertx.vertx();
-        this.args = args;
-        this.meessageGenerator = new MessageGenerator(args.messageSize());
+
+    public LoadGenerator(final DeploymentOptions deploymentOptions, final Vertx vertx,
+                         final MessagePublisher publisher) {
+        this.deploymentOptions = deploymentOptions;
+        this.vertx = vertx;
+        this.publisher = publisher;
     }
 
     public void start() {
-        final DeploymentOptions deploymentOptions = createDeploymentOptions();
-        deployKafkaMessageProducers(deploymentOptions);
-    }
-
-    private void startMessagePublishers() {
-        KafkaPublisher publisher = new KafkaPublisher(vertx.eventBus());
-        while (isRunning()) {
-            publisher.send(args.topic(), meessageGenerator.nextMessage());
-        }
-    }
-
-    private boolean isRunning() {
-        return true;
-    }
-
-    private DeploymentOptions createDeploymentOptions() {
-        // sample config
-        JsonObject producerConfig = new JsonObject();
-        producerConfig.put("bootstrap.servers", args.kafkaCluster().toString());
-        producerConfig.put("serializer.class", args.messageSerializerClass());
-        producerConfig.put("default_topic", args.topic());
-
-        return new DeploymentOptions()
-                .setInstances(args.threads())
-                .setConfig(producerConfig);
-    }
-
-    @Override
-    public void close() throws IOException {
-
-    }
-
-    void deployKafkaMessageProducers(final DeploymentOptions deploymentOptions) {
-        // use your vertx reference to deploy the consumer verticle
         vertx.deployVerticle(MessageProducer.class.getName(),
                 deploymentOptions,
                 deploy -> {
@@ -66,9 +34,19 @@ public class LoadGenerator implements Closeable {
                         vertx.close();
                         return;
                     }
-                    System.out.println("kafka producer verticle started");
-                    vertx.executeBlocking(f -> startMessagePublishers(), r -> {
+                    System.out.println("kafka producer verticle(s) started, id:" + deploy.result());
+                    producerDeploymentId = deploy.result();
+
+                    vertx.executeBlocking(f -> publisher.start(), r -> {
                     });
                 });
+    }
+
+    @Override
+    public void close() throws IOException {
+        publisher.stop();
+        if (!Strings.isNullOrEmpty(producerDeploymentId)) {
+            vertx.undeploy(producerDeploymentId);
+        }
     }
 }
